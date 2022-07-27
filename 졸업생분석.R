@@ -218,21 +218,23 @@ df_emp_all |>
 #######################################################
 
 distinct(df_emp_all, 학과중분류)
-
+df_emp_all$학과중분류1 <- gsub('ㆍ', '/', df_emp_all$학과중분류)
 
 df_emp_all |>
 #  filter(학과대분류 == '사회계열') |>
-  group_by(장애인코드, 학과중분류) |>
+  group_by(장애인코드, 학제과정, 학과대분류, 학과중분류) |>
   summarise(sum = sum(all_sum)) |>
   mutate(percentage = sum/sum(sum)) |>
   write_clip()
 
+
+
 df_emp_all |>
 #  filter(학과대분류 == '사회계열') |>
-  group_by(장애인코드, 학제과정, 학과중분류) |>
+  group_by(장애인코드, 학제과정, 학과대분류, 학과중분류1) |>
   summarise(sum = sum(all_sum)) |>
   mutate(percentage = sum/sum(sum)) |>
-  ggplot(aes(x = 학과중분류, y = percentage)) + 
+  ggplot(aes(x = 학과중분류1, y = percentage)) + 
   geom_col(aes(fill = 장애인코드), position = 'dodge') + 
   geom_text(aes(label = scales::percent(round(percentage, 3), accuracy = 0.1), group = 장애인코드), position = position_dodge(width = 0.9), size = 3, hjust = -0.2) +
   scale_fill_discrete(labels = c('비장애인', '장애인')) + 
@@ -242,7 +244,7 @@ df_emp_all |>
   labs(title = '비장애인과 장애인의 학과 대계열별 분포 비율', y = '비율', fill = '구분') +
   theme_bw() +
   theme(legend.position = 'bottom') + 
-  facet_grid(~학제과정)
+  facet_grid(학과대분류~학제과정, scale = 'free', space ='free')
 
 
 #######################################################
@@ -272,6 +274,22 @@ df_emp_all |>
   mutate(percentage = sum/sum(sum)) |>
   write_clip()
 
+df_emp_all |>
+  #  filter(학과대분류 == '사회계열') |>
+  group_by(장애인코드, 거주지역) |>
+  summarise(sum = sum(all_sum)) |>
+  mutate(percentage = sum/sum(sum)) |>
+  ggplot(aes(x = 거주지역, y = percentage)) + 
+  geom_col(aes(fill = 장애인코드), position = 'dodge') + 
+  geom_text(aes(label = scales::percent(round(percentage, 3), accuracy = 0.1), group = 장애인코드), position = position_dodge(width = 0.9), size = 3, hjust = -0.2) +
+  scale_fill_discrete(labels = c('비장애인', '장애인')) + 
+  scale_x_discrete(limits = rev) +
+  scale_y_continuous(labels = scales::percent, expand = expansion(add = c(0.005,0.025))) +
+  coord_flip() +
+  labs(title = '비장애인과 장애인의 거주지역별 분포 비율', y = '비율', fill = '구분') +
+  theme_bw() +
+  theme(legend.position = 'bottom') 
+
 
 #######################################################
 
@@ -299,7 +317,7 @@ df_emp_all |>
   ) |> 
   group_by(장애인코드, 학교지역, 대학_거주) |>
   summarise(sum = sum(all_sum)) |>
-  mutate(percentage = sum/sum(sum)) |>
+  mutate(percentage = sum/sum(sum)) |> View()
   write_clip()
 
 #######################################################
@@ -327,8 +345,30 @@ df_emp_all |>
   ) |> 
   group_by(장애인코드, 학교지역, 대학_고교) |>
   summarise(sum = sum(all_sum)) |>
-  mutate(percentage = sum/sum(sum)) |>
+  mutate(percentage = sum/sum(sum)) |> 
   write_clip()
+
+
+df_emp_all |>
+  mutate(대학_고교 = case_when(
+    as.character(출신고교지역) == as.character(학교지역) ~ '일치',
+    TRUE ~ '불일치'
+  )
+  ) |> 
+  group_by(장애인코드, 학교지역, 대학_고교) |>
+  summarise(sum = sum(all_sum)) |>
+  mutate(percentage = sum/sum(sum)) |>
+  ggplot(aes(x = 학교지역, y = percentage)) + 
+  geom_col(aes(fill = 장애인코드), position = 'dodge') + 
+  geom_text(aes(label = scales::percent(round(percentage, 3), accuracy = 0.1), group = 장애인코드), position = position_dodge(width = 0.9), size = 3, hjust = -0.2) +
+  scale_fill_discrete(labels = c('비장애인', '장애인')) + 
+  scale_x_discrete(limits = rev) +
+  scale_y_continuous(labels = scales::percent, expand = expansion(add = c(0.005,0.025))) +
+  coord_flip() +
+  labs(title = '비장애인과 장애인의 거주지역별 분포 비율', y = '비율', fill = '구분') +
+  theme_bw() +
+  theme(legend.position = 'bottom') +
+  facet_grid(~대학_고교)
 
 
 #######################################################
